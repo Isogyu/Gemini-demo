@@ -1,0 +1,64 @@
+[
+  {
+    "id": "sme-2025",
+    "label": "中小法人（資本金3,000万円）サンプル",
+    "company_name": "株式会社サンプル商事",
+    "fiscal_year": 2025,
+    "capital": 30000000,
+    "trial_balance": {
+      "name": "株式会社サンプル商事 2025年度 試算表",
+      "fiscal_year": 2025,
+      "lines": [
+        {"account_code": "1010", "account_name": "現金預金", "category": "asset", "debit": 50000000, "credit": 0},
+        {"account_code": "1030", "account_name": "売掛金", "category": "asset", "debit": 30000000, "credit": 0},
+        {"account_code": "1500", "account_name": "建物", "category": "asset", "debit": 40000000, "credit": 0},
+        {"account_code": "2010", "account_name": "買掛金", "category": "liability", "debit": 0, "credit": 20000000},
+        {"account_code": "3010", "account_name": "資本金", "category": "equity", "debit": 0, "credit": 30000000},
+        {"account_code": "3050", "account_name": "繰越利益剰余金", "category": "equity", "debit": 0, "credit": 50000000},
+        {"account_code": "4010", "account_name": "売上高", "category": "revenue", "debit": 0, "credit": 200000000},
+        {"account_code": "5010", "account_name": "売上原価", "category": "expense", "debit": 120000000, "credit": 0},
+        {"account_code": "5200", "account_name": "給与手当", "category": "expense", "debit": 40000000, "credit": 0},
+        {"account_code": "5300", "account_name": "交際費", "category": "expense", "debit": 12000000, "credit": 0},
+        {"account_code": "5400", "account_name": "減価償却費", "category": "expense", "debit": 8000000, "credit": 0}
+      ]
+    },
+    "entertainment": {"total_expense": 12000000, "food_and_drink_expense": 7000000},
+    "depreciation_assets": [
+      {"asset_name": "本社建物", "booked_depreciation": 5000000, "tax_limit": 4200000},
+      {"asset_name": "社用車", "booked_depreciation": 3000000, "tax_limit": 3000000}
+    ],
+    "other_additions": 0,
+    "other_subtractions": 0
+  },
+  {
+    "id": "large-2025",
+    "label": "大法人（資本金5億円）サンプル",
+    "company_name": "サンプル製造株式会社",
+    "fiscal_year": 2025,
+    "capital": 500000000,
+    "trial_balance": {
+      "name": "サンプル製造株式会社 2025年度 試算表",
+      "fiscal_year": 2025,
+      "lines": [
+        {"account_code": "1010", "account_name": "現金預金", "category": "asset", "debit": 300000000, "credit": 0},
+        {"account_code": "1030", "account_name": "売掛金", "category": "asset", "debit": 200000000, "credit": 0},
+        {"account_code": "1600", "account_name": "機械装置", "category": "asset", "debit": 500000000, "credit": 0},
+        {"account_code": "2100", "account_name": "長期借入金", "category": "liability", "debit": 0, "credit": 250000000},
+        {"account_code": "3010", "account_name": "資本金", "category": "equity", "debit": 0, "credit": 500000000},
+        {"account_code": "3050", "account_name": "繰越利益剰余金", "category": "equity", "debit": 0, "credit": 40000000},
+        {"account_code": "4010", "account_name": "売上高", "category": "revenue", "debit": 0, "credit": 1500000000},
+        {"account_code": "5010", "account_name": "売上原価", "category": "expense", "debit": 900000000, "credit": 0},
+        {"account_code": "5200", "account_name": "給与手当", "category": "expense", "debit": 300000000, "credit": 0},
+        {"account_code": "5300", "account_name": "交際費", "category": "expense", "debit": 30000000, "credit": 0},
+        {"account_code": "5400", "account_name": "減価償却費", "category": "expense", "debit": 60000000, "credit": 0}
+      ]
+    },
+    "entertainment": {"total_expense": 30000000, "food_and_drink_expense": 18000000},
+    "depreciation_assets": [
+      {"asset_name": "生産ライン設備", "booked_depreciation": 45000000, "tax_limit": 38000000},
+      {"asset_name": "工場建屋", "booked_depreciation": 15000000, "tax_limit": 15000000}
+    ],
+    "other_additions": 2000000,
+    "other_subtractions": 1000000
+  }
+]
