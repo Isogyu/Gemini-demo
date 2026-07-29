@@ -16,7 +16,7 @@ SAMPLE = """廃止賛成側立論
 純資産増加説を採用するわが国では必要経費を控除することとしている【法37条1項、資料2参照】。
 しかし56条は親族への対価を一律に必要経費から除外しており、担税力に即した課税に反するといえる【資料3参照】。
 （2）公平
-公平とは同様の状況にあるものは同様に取り扱うことを要求する。
+公平とは同様の状況にあるものは同様に、異なる状況にあるものは状況に応じて異なって取り扱われることを要求する。しかし56条等は適正な対価を支払った納税者と恣意的な所得分散を行った納税者とを区別していない。
 """
 
 
@@ -60,3 +60,11 @@ def test_argument_without_citation_is_flagged():
     arguments = parse_document("doc1", Side.PRO, SAMPLE)
     warned = [a for a in arguments if a.warnings]
     assert any("出典" in w for a in warned for w in a.warnings)
+
+
+def test_short_block_without_citation_is_not_flagged():
+    """短い主張・結論ブロックは出典欠落の警告対象外（出典チェックと同じ閾値）。"""
+    arguments = parse_document("doc1", Side.PRO, SAMPLE)
+    claim_block = next(a for a in arguments if a.section == "Ⅰ")
+    assert claim_block.citations == []
+    assert claim_block.warnings == []

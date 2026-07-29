@@ -1,6 +1,14 @@
 "use client";
 
-import { AlertCircle, Calculator, Loader2, Play, Sparkles } from "lucide-react";
+import {
+  AlertCircle,
+  Calculator,
+  ChevronDown,
+  ChevronRight,
+  Loader2,
+  Play,
+  Sparkles,
+} from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
@@ -9,16 +17,18 @@ import { DocumentInputCard } from "@/components/debate/DocumentInputCard";
 import { EvidencePanel } from "@/components/debate/EvidencePanel";
 import { IssueMap } from "@/components/debate/IssueMap";
 import { RebuttalList } from "@/components/debate/RebuttalList";
+import { StatutePanel } from "@/components/debate/StatutePanel";
 import { analyzeDebate, fetchDebateSamples } from "@/lib/debateApi";
 import type { DebateAnalysis, DebateSample } from "@/lib/debateTypes";
 
-type TabId = "issues" | "rebuttals" | "structure" | "evidence";
+type TabId = "issues" | "rebuttals" | "structure" | "evidence" | "statutes";
 
 const TABS: { id: TabId; label: string }[] = [
   { id: "issues", label: "論点マップ" },
   { id: "rebuttals", label: "反駁・想定尋問" },
   { id: "structure", label: "立論の構造" },
   { id: "evidence", label: "出典チェック" },
+  { id: "statutes", label: "法令・参考資料の突合" },
 ];
 
 const EMPTY = { title: "", text: "" };
@@ -27,6 +37,10 @@ export default function DebatePage() {
   const [topic, setTopic] = useState("");
   const [pro, setPro] = useState(EMPTY);
   const [con, setCon] = useState(EMPTY);
+  const [proRef, setProRef] = useState(EMPTY);
+  const [conRef, setConRef] = useState(EMPTY);
+  const [inputKey, setInputKey] = useState(0);
+  const [showReferences, setShowReferences] = useState(false);
   const [samples, setSamples] = useState<DebateSample[]>([]);
   const [analysis, setAnalysis] = useState<DebateAnalysis | null>(null);
   const [tab, setTab] = useState<TabId>("issues");
@@ -46,6 +60,15 @@ export default function DebatePage() {
       if (document.side === "pro") setPro(value);
       else setCon(value);
     }
+    setProRef(EMPTY);
+    setConRef(EMPTY);
+    for (const document of sample.references) {
+      const value = { title: document.title ?? "", text: document.text };
+      if (document.side === "pro") setProRef(value);
+      else setConRef(value);
+    }
+    if (sample.references.length > 0) setShowReferences(true);
+    setInputKey((current) => current + 1);
     setAnalysis(null);
     setError(null);
   }, []);
@@ -61,17 +84,22 @@ export default function DebatePage() {
       return;
     }
 
+    const references = [
+      { side: "pro" as const, ...proRef },
+      { side: "con" as const, ...conRef },
+    ].filter((document) => document.text.trim().length > 0);
+
     setLoading(true);
     setError(null);
     try {
-      setAnalysis(await analyzeDebate(documents, topic));
+      setAnalysis(await analyzeDebate(documents, topic, references));
       setTab("issues");
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "解析に失敗しました。");
     } finally {
       setLoading(false);
     }
-  }, [pro, con, topic]);
+  }, [pro, con, proRef, conRef, topic]);
 
   return (
     <main className="mx-auto max-w-6xl px-6 py-10">
@@ -82,7 +110,7 @@ export default function DebatePage() {
             ディベート立論アナライザー
           </h1>
           <p className="mt-1 text-sm text-slate-500">
-            賛否の立論を読み込み、争点ごとの対置（論点マップ）・反駁候補・想定尋問・出典の欠落を自動抽出します。
+            賛否の立論を読み込み、争点ごとの対置（論点マップ）・反駁候補・想定尋問・出典の欠落を自動抽出します。引用された法令は e-Gov 法令API から現行条文を取得して突合します。
           </p>
         </div>
         <Link
@@ -120,6 +148,7 @@ export default function DebatePage() {
 
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           <DocumentInputCard
+            key={`pro-argument-${inputKey}`}
             side="pro"
             title={pro.title}
             text={pro.text}
@@ -127,6 +156,7 @@ export default function DebatePage() {
             onError={setError}
           />
           <DocumentInputCard
+            key={`con-argument-${inputKey}`}
             side="con"
             title={con.title}
             text={con.text}
@@ -134,6 +164,43 @@ export default function DebatePage() {
             onError={setError}
           />
         </div>
+
+        <button
+          type="button"
+          data-testid="toggle-references"
+          onClick={() => setShowReferences((current) => !current)}
+          className="inline-flex items-center gap-1 text-sm font-medium text-slate-700 hover:underline"
+        >
+          {showReferences ? (
+            <ChevronDown className="h-4 w-4" />
+          ) : (
+            <ChevronRight className="h-4 w-4" />
+          )}
+          参考資料（関連法令・資料N）を読み込む
+        </button>
+
+        {showReferences && (
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <DocumentInputCard
+              key={`pro-reference-${inputKey}`}
+              side="pro"
+              kind="reference"
+              title={proRef.title}
+              text={proRef.text}
+              onChange={setProRef}
+              onError={setError}
+            />
+            <DocumentInputCard
+              key={`con-reference-${inputKey}`}
+              side="con"
+              kind="reference"
+              title={conRef.title}
+              text={conRef.text}
+              onChange={setConRef}
+              onError={setError}
+            />
+          </div>
+        )}
 
         <button
           data-testid="run-analysis"
@@ -192,6 +259,13 @@ export default function DebatePage() {
               <EvidencePanel
                 evidence={analysis.evidence}
                 argumentList={analysis.arguments}
+              />
+            )}
+            {tab === "statutes" && (
+              <StatutePanel
+                references={analysis.statute_references}
+                statutes={analysis.statutes}
+                checks={analysis.reference_checks}
               />
             )}
           </div>

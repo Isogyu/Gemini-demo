@@ -29,12 +29,13 @@ export async function fetchDebateSamples(): Promise<DebateSample[]> {
 
 export async function analyzeDebate(
   documents: DebateDocumentInput[],
-  topic: string
+  topic: string,
+  references: DebateDocumentInput[] = []
 ): Promise<DebateAnalysis> {
   const response = await fetch(`${API_BASE_URL}/api/debate/analyze`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ documents, topic }),
+    body: JSON.stringify({ documents, references, topic }),
     cache: "no-store",
   });
   if (!response.ok) return parseError(response);

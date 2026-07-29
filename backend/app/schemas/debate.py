@@ -5,6 +5,8 @@ from typing import List, Optional
 
 from pydantic import BaseModel, Field
 
+from app.schemas.statute import StatuteArticle, StatuteReference
+
 
 class Side(str, Enum):
     """立論の立場。"""
@@ -110,7 +112,84 @@ class EvidenceReport(BaseModel):
     )
 
 
+class ReferenceStatuteEntry(BaseModel):
+    """参考資料の「関連法令」に貼られた条文。"""
+
+    law_name: str
+    label: str
+    article: int
+    paragraph: Optional[int] = None
+    text: str = ""
+
+
+class MaterialEntry(BaseModel):
+    """参考資料の「資料N」。"""
+
+    number: int
+    label: str
+    sources: List[str] = Field(default_factory=list, description="出典文献（著者・書名・頁）")
+    subsections: List[str] = Field(default_factory=list)
+    excerpt: str = ""
+
+
+class ReferencePacket(BaseModel):
+    side: Side
+    title: str
+    statutes: List[ReferenceStatuteEntry] = Field(default_factory=list)
+    materials: List[MaterialEntry] = Field(default_factory=list)
+
+
+class MaterialLinkStatus(str, Enum):
+    LINKED = "linked"
+    MISSING = "missing"
+    UNUSED = "unused"
+
+
+class MaterialLink(BaseModel):
+    """立論の【資料N参照】と参考資料の資料Nの対応。"""
+
+    number: int
+    label: str = ""
+    sources: List[str] = Field(default_factory=list)
+    subsections: List[str] = Field(default_factory=list)
+    cited_by: List[str] = Field(default_factory=list)
+    status: MaterialLinkStatus
+    note: str = ""
+
+
+class StatuteConsistencyStatus(str, Enum):
+    CONSISTENT = "consistent"
+    DIFFERS = "differs"
+    UNVERIFIED = "unverified"
+
+
+class StatuteConsistency(BaseModel):
+    """参考資料に引用された条文と現行条文の照合結果。"""
+
+    label: str
+    packet_text: str
+    status: StatuteConsistencyStatus
+    note: str = ""
+
+
+class ReferenceCheck(BaseModel):
+    side: Side
+    packet_title: str
+    material_links: List[MaterialLink] = Field(default_factory=list)
+    missing_numbers: List[int] = Field(default_factory=list)
+    unused_numbers: List[int] = Field(default_factory=list)
+    statute_consistency: List[StatuteConsistency] = Field(default_factory=list)
+
+
 class DebateDocumentInput(BaseModel):
+    side: Side
+    title: str = ""
+    text: str
+
+
+class ReferenceDocumentInput(BaseModel):
+    """参考資料（証拠資料集）の入力。"""
+
     side: Side
     title: str = ""
     text: str
@@ -118,7 +197,14 @@ class DebateDocumentInput(BaseModel):
 
 class DebateAnalysisRequest(BaseModel):
     documents: List[DebateDocumentInput] = Field(min_length=1, max_length=2)
+    references: List[ReferenceDocumentInput] = Field(default_factory=list, max_length=2)
     topic: str = ""
+    resolve_statutes: bool = Field(
+        default=True, description="e-Gov 法令APIで条文を自動取得するか"
+    )
+    default_law_name: str = Field(
+        default="所得税法", description="「法○条」のように法令名が省略された場合の補完先"
+    )
 
 
 class DebateAnalysis(BaseModel):
@@ -128,6 +214,9 @@ class DebateAnalysis(BaseModel):
     issues: List[IssueClash]
     rebuttals: List[Rebuttal]
     evidence: List[EvidenceReport]
+    statute_references: List[StatuteReference] = Field(default_factory=list)
+    statutes: List[StatuteArticle] = Field(default_factory=list)
+    reference_checks: List[ReferenceCheck] = Field(default_factory=list)
 
 
 class ExtractedDocument(BaseModel):
@@ -143,3 +232,4 @@ class DebateSample(BaseModel):
     label: str
     topic: str
     documents: List[DebateDocumentInput]
+    references: List[ReferenceDocumentInput] = Field(default_factory=list)
