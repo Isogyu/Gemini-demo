@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.debate_routes import router as debate_router
 from app.api.routes import router
 from app.db.database import init_db
 
@@ -20,7 +21,7 @@ async def lifespan(_: FastAPI):
 
 app = FastAPI(
     lifespan=lifespan,
-    title="Corporate Tax & Financial Statement Reconciliation Simulator",
+    title="Tax Simulator & Debate Argument Analyzer",
     version="0.1.0",
 )
 
@@ -33,3 +34,4 @@ app.add_middleware(
 )
 
 app.include_router(router, prefix="/api")
+app.include_router(debate_router, prefix="/api")
