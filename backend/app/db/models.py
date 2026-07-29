@@ -20,6 +20,18 @@ class TrialBalanceRecord(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow)
 
 
+class DebateAnalysisRun(Base):
+    __tablename__ = "debate_analysis_runs"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    topic: Mapped[str] = mapped_column(String(500), nullable=False)
+    document_count: Mapped[int] = mapped_column(Integer, nullable=False)
+    issue_count: Mapped[int] = mapped_column(Integer, nullable=False)
+    rebuttal_count: Mapped[int] = mapped_column(Integer, nullable=False)
+    result_payload: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow)
+
+
 class ReconciliationRun(Base):
     __tablename__ = "reconciliation_runs"
 

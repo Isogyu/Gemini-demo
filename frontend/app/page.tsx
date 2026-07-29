@@ -1,6 +1,7 @@
 "use client";
 
-import { AlertCircle, Loader2, Play, Table2 } from "lucide-react";
+import { AlertCircle, Loader2, Play, Sparkles, Table2 } from "lucide-react";
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
 import { IncomeChart } from "@/components/IncomeChart";
@@ -56,13 +57,22 @@ export default function Home() {
 
   return (
     <main className="mx-auto max-w-6xl px-6 py-10">
-      <header>
-        <h1 className="text-2xl font-bold tracking-tight">
-          法人税・財務諸表 税務調整シミュレーター
-        </h1>
-        <p className="mt-1 text-sm text-slate-500">
-          試算表を読み込み、交際費・減価償却の税務調整を反映した課税所得と法人税等を試算します。
-        </p>
+      <header className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">
+            法人税・財務諸表 税務調整シミュレーター
+          </h1>
+          <p className="mt-1 text-sm text-slate-500">
+            試算表を読み込み、交際費・減価償却の税務調整を反映した課税所得と法人税等を試算します。
+          </p>
+        </div>
+        <Link
+          href="/debate"
+          className="inline-flex items-center gap-1 rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
+        >
+          <Sparkles className="h-3 w-3" />
+          ディベート立論アナライザー
+        </Link>
       </header>
 
       <section className="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
