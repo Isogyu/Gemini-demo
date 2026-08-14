@@ -13,9 +13,11 @@ from app.schemas.debate import (
     DebateSample,
     ExtractedDocument,
 )
-from app.services.debate.analysis import analyze
+from app.services.debate.analysis import analyze, attach_statutes
 from app.services.debate.extractor import UnsupportedFileError, extract_document
 from app.services.debate.samples import get_debate_sample, load_debate_samples
+from app.services.statute.egov import EgovClient, get_egov_client
+from app.services.statute.service import resolve_references
 
 router = APIRouter(prefix="/debate", tags=["debate"])
 
@@ -48,12 +50,21 @@ async def extract(file: UploadFile = File(...)) -> ExtractedDocument:
 
 @router.post("/analyze", response_model=DebateAnalysis)
 def create_analysis(
-    request: DebateAnalysisRequest, db: Session = Depends(get_db)
+    request: DebateAnalysisRequest,
+    db: Session = Depends(get_db),
+    egov: EgovClient = Depends(get_egov_client),
 ) -> DebateAnalysis:
     try:
         result = analyze(request)
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc))
+
+    if request.resolve_statutes and result.statute_references:
+        attach_statutes(
+            result,
+            request,
+            resolve_references(db, result.statute_references, egov),
+        )
 
     db.add(
         DebateAnalysisRun(

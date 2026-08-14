@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.debate_routes import router as debate_router
 from app.api.routes import router
+from app.api.statute_routes import router as statute_router
 from app.db.database import init_db
 
 ALLOWED_ORIGINS = os.getenv(
@@ -28,6 +29,9 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
+    allow_origin_regex=os.getenv(
+        "ALLOWED_ORIGIN_REGEX", r"https://.*\.devinapps\.com"
+    ),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -35,3 +39,4 @@ app.add_middleware(
 
 app.include_router(router, prefix="/api")
 app.include_router(debate_router, prefix="/api")
+app.include_router(statute_router, prefix="/api")

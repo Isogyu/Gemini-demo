@@ -15,6 +15,8 @@ PAREN_HEADING = re.compile(r"^[（(]([0-9０-９]{1,2})[）)]\s*(\S.*)$")
 CITATION = re.compile(r"【([^】]+)】")
 SENTENCE_SPLIT = re.compile(r"(?<=。)")
 MIN_BLOCK_LENGTH = 12
+#: この長さ未満のブロックは要旨・結論とみなし、出典欠落の警告対象から除く。
+UNSUPPORTED_MIN_LENGTH = 80
 
 CLAIM_MARKERS = ("といえる", "べきである", "べきでない", "といえよう", "適当である", "評価せざるを得ない")
 STATUTE_HINT = re.compile(r"(憲法|法|条|税制改革法)")
@@ -135,7 +137,7 @@ def parse_document(
             continue
         citations = extract_citations(body)
         warnings: List[str] = []
-        if not citations:
+        if not citations and len(body) >= UNSUPPORTED_MIN_LENGTH:
             warnings.append("出典（【】表記）が一つも示されていません")
         if len(body) > 600:
             warnings.append("1ブロックが長すぎます（600字超）。争点ごとの分割を検討してください")

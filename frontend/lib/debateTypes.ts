@@ -76,6 +76,62 @@ export interface DebateDocumentInput {
   text: string;
 }
 
+export type StatuteLookupStatus = "found" | "not_found" | "unavailable";
+export type MaterialLinkStatus = "linked" | "missing" | "unused";
+export type StatuteConsistencyStatus = "consistent" | "differs" | "unverified";
+
+export interface StatuteReference {
+  raw: string;
+  law_name: string;
+  article: number;
+  paragraph: number | null;
+  label: string;
+  cited_by: string[];
+}
+
+export interface StatuteArticle {
+  label: string;
+  law_name: string;
+  law_num: string;
+  law_id: string;
+  article: number;
+  paragraph: number | null;
+  caption: string;
+  text: string;
+  source_url: string;
+  fetched_at: string | null;
+  from_cache: boolean;
+  status: StatuteLookupStatus;
+  message: string;
+  cited_by: string[];
+}
+
+export interface MaterialLink {
+  number: number;
+  label: string;
+  sources: string[];
+  subsections: string[];
+  cited_by: string[];
+  status: MaterialLinkStatus;
+  note: string;
+}
+
+export interface StatuteConsistency {
+  label: string;
+  packet_text: string;
+  status: StatuteConsistencyStatus;
+  note: string;
+}
+
+export interface ReferenceCheck {
+  side: Side;
+  packet_title: string;
+  material_links: MaterialLink[];
+  missing_numbers: number[];
+  unused_numbers: number[];
+  statute_consistency: StatuteConsistency[];
+}
+
 export interface DebateAnalysis {
   topic: string;
   documents: DocumentSummary[];
@@ -83,6 +139,9 @@ export interface DebateAnalysis {
   issues: IssueClash[];
   rebuttals: Rebuttal[];
   evidence: EvidenceReport[];
+  statute_references: StatuteReference[];
+  statutes: StatuteArticle[];
+  reference_checks: ReferenceCheck[];
 }
 
 export interface ExtractedDocument {
@@ -96,6 +155,7 @@ export interface DebateSample {
   label: string;
   topic: string;
   documents: DebateDocumentInput[];
+  references: DebateDocumentInput[];
 }
 
 export const SIDE_LABEL: Record<Side, string> = {
@@ -114,4 +174,22 @@ export const STRENGTH_LABEL: Record<RebuttalStrength, string> = {
   high: "強",
   medium: "中",
   low: "弱",
+};
+
+export const STATUTE_STATUS_LABEL: Record<StatuteLookupStatus, string> = {
+  found: "e-Govより取得",
+  not_found: "条文が見つからない",
+  unavailable: "e-Gov に接続できません",
+};
+
+export const MATERIAL_STATUS_LABEL: Record<MaterialLinkStatus, string> = {
+  linked: "紐付け済み",
+  missing: "参考資料になし",
+  unused: "未使用",
+};
+
+export const CONSISTENCY_LABEL: Record<StatuteConsistencyStatus, string> = {
+  consistent: "現行条文と一致",
+  differs: "現行条文と差異あり",
+  unverified: "未照合",
 };

@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from sqlalchemy import DateTime, Float, Integer, String, Text
+from sqlalchemy import DateTime, Float, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.database import Base
@@ -30,6 +30,22 @@ class DebateAnalysisRun(Base):
     rebuttal_count: Mapped[int] = mapped_column(Integer, nullable=False)
     result_payload: Mapped[str] = mapped_column(Text, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow)
+
+
+class StatuteArticleCache(Base):
+    """e-Gov 法令APIから取得した条文のキャッシュ。"""
+
+    __tablename__ = "statute_article_cache"
+    __table_args__ = (UniqueConstraint("law_name", "article", name="uq_statute_article"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    law_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    law_num: Mapped[str] = mapped_column(String(255), nullable=False, default="")
+    law_id: Mapped[str] = mapped_column(String(64), nullable=False, default="")
+    article: Mapped[int] = mapped_column(Integer, nullable=False)
+    caption: Mapped[str] = mapped_column(String(500), nullable=False, default="")
+    text: Mapped[str] = mapped_column(Text, nullable=False)
+    fetched_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow)
 
 
 class ReconciliationRun(Base):

@@ -1,28 +1,45 @@
 "use client";
 
-import { FileUp, Loader2 } from "lucide-react";
+import { AlertTriangle, FileUp, Loader2 } from "lucide-react";
 import { useRef, useState } from "react";
 
 import { extractDebateDocument } from "@/lib/debateApi";
 import { SIDE_LABEL, type Side } from "@/lib/debateTypes";
 
+type DocumentKind = "argument" | "reference";
+
 interface Props {
   side: Side;
   title: string;
   text: string;
+  kind?: DocumentKind;
   onChange: (value: { title: string; text: string }) => void;
   onError: (message: string) => void;
 }
+
+const KIND_LABEL: Record<DocumentKind, string> = {
+  argument: "立論",
+  reference: "参考資料（任意）",
+};
+
+const PLACEHOLDER: Record<DocumentKind, string> = {
+  argument:
+    "「Ⅰ. 主張」「1. 理由」「（1）公平」のような見出しを含む立論を貼り付けてください。",
+  reference:
+    "「Ⅰ. 関連法令」「Ⅱ. 資料」を含む参考資料を貼り付けてください。資料番号と出典文献を立論の【資料N参照】に突合します。",
+};
 
 export function DocumentInputCard({
   side,
   title,
   text,
+  kind = "argument",
   onChange,
   onError,
 }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [warning, setWarning] = useState<string | null>(null);
 
   const accent =
     side === "pro"
@@ -31,12 +48,13 @@ export function DocumentInputCard({
 
   async function handleFile(file: File) {
     setUploading(true);
+    setWarning(null);
     try {
       const extracted = await extractDebateDocument(file);
       onChange({ title: extracted.title, text: extracted.text });
       if (extracted.detected_side && extracted.detected_side !== side) {
-        onError(
-          `「${file.name}」は${SIDE_LABEL[extracted.detected_side]}の立論と推定されます。枠を確認してください。`
+        setWarning(
+          `「${file.name}」は${SIDE_LABEL[extracted.detected_side]}の資料と推定されます。枠を確認してください。`
         );
       }
     } catch (error) {
@@ -51,11 +69,11 @@ export function DocumentInputCard({
     <div className={`rounded-xl border p-4 shadow-sm ${accent}`}>
       <div className="flex items-center justify-between gap-2">
         <h2 className="text-sm font-semibold text-slate-800">
-          {SIDE_LABEL[side]}の立論
+          {SIDE_LABEL[side]}の{KIND_LABEL[kind]}
         </h2>
         <button
           type="button"
-          data-testid={`upload-${side}`}
+          data-testid={`upload-${kind}-${side}`}
           onClick={() => inputRef.current?.click()}
           className="inline-flex items-center gap-1 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
         >
@@ -78,19 +96,32 @@ export function DocumentInputCard({
         />
       </div>
 
+      {warning && (
+        <div
+          data-testid={`mismatch-${kind}-${side}`}
+          className="mt-3 flex items-start gap-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800"
+        >
+          <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" />
+          <span>{warning}</span>
+        </div>
+      )}
+
       <input
-        data-testid={`title-${side}`}
+        data-testid={`title-${kind}-${side}`}
         value={title}
         onChange={(e) => onChange({ title: e.target.value, text })}
         placeholder="タイトル（任意）"
         className="mt-3 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
       />
       <textarea
-        data-testid={`text-${side}`}
+        data-testid={`text-${kind}-${side}`}
         value={text}
-        onChange={(e) => onChange({ title, text: e.target.value })}
-        rows={10}
-        placeholder="「Ⅰ. 主張」「1. 理由」「（1）公平」のような見出しを含む立論を貼り付けてください。"
+        onChange={(e) => {
+          setWarning(null);
+          onChange({ title, text: e.target.value });
+        }}
+        rows={kind === "argument" ? 10 : 6}
+        placeholder={PLACEHOLDER[kind]}
         className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 font-mono text-xs leading-relaxed"
       />
       <p className="mt-1 text-right text-xs text-slate-500">{text.length} 字</p>

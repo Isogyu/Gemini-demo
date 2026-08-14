@@ -39,7 +39,12 @@ backend/
         issues.py          争点辞書と論点マップの構築
         rebuttal.py        反駁パターンと想定尋問の生成
         extractor.py       .docx / .txt からの本文抽出
+        materials.py       参考資料のパースと資料Nの突合
         analysis.py        解析の統合エントリポイント
+      statute/             法令の自動参照（e-Gov 法令API）
+        references.py      本文 → 法令参照の抽出・正規化
+        egov.py            e-Gov 法令API クライアントと XML パース
+        service.py         条文の取得と SQLite キャッシュ
     schemas/               Pydantic スキーマ（入出力の契約）
     db/                    SQLAlchemy エンジンとモデル
     data/                  サンプル試算表 / サンプル立論
@@ -64,6 +69,7 @@ API ルート（`api/`）・業務ロジック（`services/`）・永続化（`d
 | 論点マップ | 争点ごとに賛否を対置。片側しか論じていない争点は「無応答」として検出 |
 | 反駁候補 | 相手立論の文言（trigger）を起点に反駁の型を引き当て、想定尋問を付す |
 | 出典チェック | 資料 / 法令 / 判例の一覧と、出典が付いていない論証ブロックの一覧 |
+| 法令・参考資料の突合 | 引用された法令の現行条文（e-Gov 法令API）と、【資料N参照】と参考資料の突合 |
 
 解析は LLM を使わない規則ベースで、生成される反駁には必ず起点となった
 相手の文言が付きます（原文にない事実を作り出さない）。
@@ -71,6 +77,26 @@ API ルート（`api/`）・業務ロジック（`services/`）・永続化（`d
 - 争点辞書: `backend/app/services/debate/issues.py`
 - 反駁パターン: `backend/app/services/debate/rebuttal.py`
 - 立論パーサ: `backend/app/services/debate/parser.py`
+
+### 法令の自動参照（e-Gov 法令API）
+
+立論・参考資料の本文から法令の引用（`所得税法56条` / `法37条1項` / `日本国憲法14条1項` /
+`第五十六条` などの漢数字表記）を抽出し、[e-Gov 法令API](https://laws.e-gov.go.jp/) から
+現行条文を取得して並べて表示します。
+
+- 法令名 → 法令番号の解決に API v2、条単位の取得に API v1 を使用し、SQLite に 30 日キャッシュ
+- 省略された「法」は論題の中心となる法令（既定値: 所得税法）として正規化
+- 取得結果には常に e-Gov の出典 URL を付し、未発見・API 停止は状態（`found` / `not_found` /
+  `unavailable`）として表示する（解析全体は失敗させない）
+- 参考資料に貼られた条文と現行条文を突合し、差異を検出（`consistent` / `differs` /
+  `unverified`）
+- 参考資料の「Ⅰ. 関連法令 / Ⅱ. 資料N」をパースし、立論の【資料N参照】と紐付けて
+  欠番（参考資料にない引用）と未使用資料を警告
+
+- e-Gov API クライアント: `backend/app/services/statute/egov.py`
+- 法令参照の抽出・正規化: `backend/app/services/statute/references.py`
+- キャッシュと取得の統合: `backend/app/services/statute/service.py`
+- 参考資料のパースと突合: `backend/app/services/debate/materials.py`
 
 ## 税務ロジックの前提（MVP 簡略モデル）
 
@@ -133,6 +159,8 @@ npm run typecheck
 | POST | `/api/debate/extract` | .docx / .txt から本文と立場を抽出 |
 | POST | `/api/debate/analyze` | 立論の解析（論点マップ・反駁候補の生成） |
 | GET | `/api/debate/history` | 過去の解析結果 |
+| GET | `/api/statutes/article` | 法令名・条・項を指定して現行条文を取得（キャッシュ優先） |
+| POST | `/api/statutes/resolve` | 本文中の法令引用を抽出してまとめて取得 |
 
 ## 免責
 
